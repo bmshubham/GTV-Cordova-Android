@@ -1,0 +1,21 @@
+{
+    "name": "com.gazebo.tv",
+    "version": "1.0.6",
+    "displayName": "GazeboTV",
+    "cordova": {
+        "platforms": [
+            "android"
+        ],
+        "plugins": {
+            "cordova-plugin-splashscreen": {},
+            "cordova-plugin-whitelist": {},
+            "cordova-sqlite-storage": {}
+        }
+    },
+    "dependencies": {
+        "cordova-android": "~6.1.2",
+        "cordova-plugin-splashscreen": "1",
+        "cordova-plugin-whitelist": "1",
+        "cordova-sqlite-storage": "1"
+    }
+}
