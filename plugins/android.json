@@ -21,7 +21,17 @@
         },
         "cordova-plugin-statusbar": {
             "PACKAGE_NAME": "com.gazebo.tv"
+        },
+        "cordova-plugin-device": {
+            "PACKAGE_NAME": "com.gazebo.tv"
+        },
+        "cordova-plugin-file-transfer": {
+            "PACKAGE_NAME": "com.gazebo.tv"
         }
     },
-    "dependent_plugins": {}
+    "dependent_plugins": {
+        "cordova-plugin-file": {
+            "PACKAGE_NAME": "com.gazebo.tv"
+        }
+    }
 }

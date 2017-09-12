@@ -9,6 +9,14 @@
     </author>
     <content src="index.html" />
     <access origin="*" />
+    <access origin="*.vhx.tv" />
+    <access origin="http://vhx-progressive.akamaized.net/" />
+    <access origin="https://*.akamaized.net/" />
+    <access origin="http://*.abdesk.in/" />
+    <allow-navigation href="https://*vhx.tv/*" />
+    <allow-navigation href="http://vhx-progressive.akamaized.net/*" />
+    <allow-navigation href="https://*akamaized.net/*" />
+    <allow-navigation href="https://*abdesk.in/*" />
     <allow-intent href="*" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
@@ -112,7 +120,10 @@
     <preference name="SplashScreenDelay" value="4000" />
     <preference name="ShowSplashScreenSpinner" value="false" />
     <preference name="SplashShowOnlyFirstTime" value="false" />
+    <preference name="AndroidPersistentFileLocation" value="Compatibility" />
     <engine name="android" spec="~6.1.2" />
+    <plugin name="cordova-plugin-device" spec="^1.1.6" />
+    <plugin name="cordova-plugin-file-transfer" spec="^1.6.3" />
     <plugin name="cordova-plugin-splashscreen" spec="1" />
     <plugin name="cordova-plugin-whitelist" spec="1" />
     <plugin name="cordova-sqlite-storage" spec="1" />

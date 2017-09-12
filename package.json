@@ -9,11 +9,16 @@
         "plugins": {
             "cordova-plugin-splashscreen": {},
             "cordova-plugin-whitelist": {},
-            "cordova-sqlite-storage": {}
+            "cordova-sqlite-storage": {},
+            "cordova-plugin-device": {},
+            "cordova-plugin-file-transfer": {}
         }
     },
     "dependencies": {
         "cordova-android": "~6.1.2",
+        "cordova-plugin-device": "^1.1.6",
+        "cordova-plugin-file": "^4.0.0",
+        "cordova-plugin-file-transfer": "^1.6.3",
         "cordova-plugin-splashscreen": "1",
         "cordova-plugin-whitelist": "1",
         "cordova-sqlite-storage": "1"

@@ -32,6 +32,21 @@
         var db;
         document.addEventListener('deviceready', checkLogin);
         document.addEventListener('deviceready', listenBackEvent, false);
+        document.addEventListener("deviceready", onFileTransfer, false);
+        document.addEventListener("deviceready", onCordovaDevice, false);
+
+        function onCordovaDevice() {
+            UUID = device.uuid;
+            console.log("Cordova version: " + device.cordova + "\n" +
+               "Device model: " + device.model + "\n" +
+               "Device platform: " + device.platform + "\n" +
+               "Device UUID: " + device.uuid + "\n" +
+               "Device version: " + device.version);
+        }
+
+        function onFileTransfer() {
+            console.log(FileTransfer);
+        }
 
         function checkLogin() {
             if(storage.getItem('api_token') != '' && storage.getItem('api_token') != undefined && storage.getItem('api_token') != null) {
@@ -248,8 +263,9 @@
                 context: this,
                 success: function(data, textStatus, xhr) {
                     var video = data.video;
+                    var videoName = video._embedded.video.title;
                     $('#video-title').text(video_name);
-                    videoDownload(api_token, video_id);
+                    videoDownload(api_token, video_id, videoName);
                     videoDetail(video);
                     window.location.href = 'index.html#videodetail';
                     $('#loader').removeClass('loader-show');
@@ -261,7 +277,7 @@
             });
         }
 
-        function videoDownload(api_token, video_id) {
+        function videoDownload(api_token, video_id, videoName) {
             $.ajax({
                 type: 'GET',
                 url: baseUrl + 'video_download',
@@ -271,7 +287,7 @@
                     var files = data.files;
                     // console.log(files); 
                     $.each(data.files, function(key, value) {
-                        videoDownloadDetails(value);
+                        videoDownloadDetails(value, videoName);
                     });                  
                 },
                 error: function(xhr, textStatus) {},
@@ -280,12 +296,71 @@
             });
         }
 
-        function videoDownloadDetails(files) {
+        function videoDownloadDetails(files, videoName) {
             if (files.quality != "adaptive"){
+                var filePath = "'"+files._links.source.href+"'";
+                var videoName = "'"+videoName+"'";
                 $('#video-download').append(
-                    '<li><a href="'+files._links.source.href+'" target="_blank">'+files.quality+' &nbsp; <span>. &nbsp; '+files.size.formatted+'</span></a></li>'
+                    '<li><a onclick="downloadFile('+filePath+', '+videoName+')" target="_blank">'+files.quality+' &nbsp; <span>. &nbsp; '+files.size.formatted+'</span></a></li>'
                 );
             }
+        }
+
+        function downloadFile(filePath, videoName) {
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0,  function (fs) {
+                console.log('file system open: ' + fs.name);  
+                var downloadedVideoName =   videoName+'.mp4';  
+                // Make sure you add the domain name to the Content-Security-Policy <meta> element.
+                // Parameters passed to getFile create a new file or return the file if it already exists.
+                fs.root.getFile(downloadedVideoName, { create: true, exclusive: false }, function (fileEntry) {
+
+                    var fileTransfer = new FileTransfer();
+                    var uri = filePath;
+                    var fileURL =  "file:///storage/emulated/0/Gazebo/Media/Videos/"+downloadedVideoName;
+                    console.log(uri);
+                 
+                    fileTransfer.download(
+                       uri, fileURL, function(entry) {
+                            console.log("Successful download...");
+                            console.log("download complete: " + entry.toURL());
+                            renderDownloadVideo(entry.toURL());
+                            console.log(entry.toURL());
+                            // readFile(entry);
+                        },
+                         
+                       function(error) {
+                            console.log("download error source " + error.source);
+                            console.log("download error target " + error.target);
+                            console.log("download error code" + error.code);
+                       },
+                         
+                       false, {
+                          headers: {
+                             "Authorization": "Basic dGVzdHVzZXJuYW1lOnRlc3RwYXNzd29yZA=="
+                          }
+                       }
+                    );            
+                });            
+            });           
+        }
+
+        function renderDownloadVideo(VideoURL) {
+            $('#downloaded-videos').append(
+                '<video width="320" height="240" controls>'+
+                '<source src="'+VideoURL+'" type="video/mp4">'+
+                '</video>'
+            );
+        }
+
+        function readFile(fs) {
+            fs.file(function (file) {
+                var reader = new FileReader();        
+                reader.onloadend = function () {        
+                    console.log("Successful file read: " + this.result);
+                    // displayFileData(fileEntry.fullPath + ": " + this.result);        
+                };        
+                reader.readAsText(file);        
+            });
         }
 
         function videoDetail(video) {
@@ -362,12 +437,12 @@
                             <p id="form-errors1"></p>
                             <label>Email Address</label>
                             <div class="username">
-                                <input type="email" placeholder="Email Address" name="email" id="email" >
+                                <input type="email" value="mipcom@gazebotv.com" placeholder="Email Address" name="email" id="email" >
                             </div>
 
                             <label>Password</label>
                             <div class="password">
-                                <input type="password" placeholder="Password" name="password" id="password" >
+                                <input type="password" value="Sullivan123!" placeholder="Password" name="password" id="password" >
                             </div>
 
                             <div class="appbutton mr20">
@@ -476,6 +551,7 @@
                         <h1 id="video-title"></h1>
                     </div>
                     <div id="video-detail"></div>
+                    <div id="downloaded-videos"></div>
                 </div>
                 <button onclick="showQuality()" class="download-video">Download Video</button>
                 <div class="video-button" onclick="hideQuality()">
@@ -497,40 +573,111 @@
         </div> 
 
         <!--
-        ++++++++++++++++++++++++++++++++++++++ NAVIGATION
-        -->
-        <div data-role="page" id="navigation" class="navigation ac-width">
-            <header>
-                <ul>
-                    <li>
-                        <a data-rel="navigation" href="#navigation" data-transition="slide">
-                            <img src="img/menu.png">
-                        </a>
-                    </li>
-                    <li>
-                        <h1><img src="img/logo.png"></h1>
-                    </li>
-                    <li>
-                        <a data-rel="back" style="padding-top:5px;"><img src="img/cancel.png" style="height: 20px;"></a>
-                    </li>
-                </ul>
-            </header>
-
-            <div data-role="main">
-                <div class="main-container">
-                    <ul class="nav"> 
-                        <li><a href="index.html#home">my library</a></li>
-                        <!-- <li><a href="#.">account</a></li>
-                        <li><a href="#.">app settings</a></li>
-                        <li><a href="#.">change password</a></li>
-                        <li><a href="#.">support</a></li> -->
-                        <li><a onclick="window.open('http://www.shopatsullivan.com', '_system');" target="_blank">Shop At Sullivan</a></li>
-                        <li><a onclick="logout()">logout</a></li>
+        ++++++++++++++++++++++++++++++++++++++ DOWNLOAD LIST
+    -->
+    <div data-role="page" id="download-list" class="sessions ac-width">
+        <header>
+            <ul>
+                <li>
+                    <a data-rel="navigation" href="index.html#navigation" data-transition="slide">
+                        <img src="img/menu.png">
+                    </a>
+                </li>
+                <li>
+                    <h1><img src="img/logo.png"></h1>
+                </li>
+                <!-- <li>
+                    <a href="#.">Help</a>
+                </li> -->
+            </ul>
+        </header>
+        
+        <div role="main">
+            <div class="main-container">
+                <div class="heading">
+                    <h1 id="product-title">Your Downloaded Items</h1>
+                </div>
+                
+                <div id="downloaded-items" class="downloaded-items">
+                    <ul>
+                        <li>1</li>
+                        <li>2</li>
+                        <li>3</li>
                     </ul>
                 </div>
+                
             </div>
         </div>
-        <script type="text/javascript" src="cordova.js"></script>
-        <script type="text/javascript" src="js/index.js"></script>
+    </div>
+        
+    <!--
+        ++++++++++++++++++++++++++++++++++++++ DOWNLOADED VIDEO DETAILS
+    -->
+    <div data-role="page" id="downloadedvideodetail" class="videodetail ac-width">
+        <header>
+            <ul>
+                <li>
+                    <a data-rel="navigation" href="index.html#navigation" data-transition="slide">
+                        <img src="img/menu.png">
+                    </a>
+                </li>
+                <li>
+                    <h1><img src="img/logo.png"></h1>
+                </li>
+                <!-- <li>
+                    <a href="#.">Help</a>
+                </li> -->
+            </ul>
+        </header>
+        
+        <div role="main">
+            <div class="main-container">
+                <div class="heading">
+                    <h1 id="downloaded-video-title"></h1>
+                </div>
+
+                <div id="downloaded-video-detail"></div>
+
+            </div>            
+        </div>
+    </div>
+
+    <!--
+    ++++++++++++++++++++++++++++++++++++++ NAVIGATION
+    -->
+    <div data-role="page" id="navigation" class="navigation ac-width">
+        <header>
+            <ul>
+                <li>
+                    <a data-rel="navigation" href="#navigation" data-transition="slide">
+                        <img src="img/menu.png">
+                    </a>
+                </li>
+                <li>
+                    <h1><img src="img/logo.png"></h1>
+                </li>
+                <li>
+                    <a data-rel="back" style="padding-top:5px;"><img src="img/cancel.png" style="height: 20px;"></a>
+                </li>
+            </ul>
+        </header>
+
+        <div data-role="main">
+            <div class="main-container">
+                <ul class="nav"> 
+                    <li><a href="index.html#home">my library</a></li>
+                    <!-- <li><a href="#.">account</a></li>
+                    <li><a href="#.">app settings</a></li>
+                    <li><a href="#.">change password</a></li>
+                    <li><a href="#.">support</a></li> -->
+                    <li><a href="index.html#download-list">Downloaded Items</a></li>
+                    <li><a onclick="window.open('http://www.shopatsullivan.com', '_system');" target="_blank">Shop At Sullivan</a></li>
+                    <li><a onclick="logout()">logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
     </body>
 </html>
